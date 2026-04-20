@@ -17,7 +17,7 @@ export default defineConfig({
     allowedHosts: ['mirofish-iyzw.onrender.com', '.onrender.com'],
     proxy: {
       '/api': {
-        target: 'http://localhost:5001',
+        target: '/',
         changeOrigin: true,
         secure: false
       }
