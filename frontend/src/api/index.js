@@ -1,16 +1,28 @@
 import axios from 'axios'
 import i18n from '../i18n'
 
-// 创建axios实例
+// Create axios instance
 const service = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
-  timeout: 300000, // 5分钟超时（本体生成可能需要较长时间）
+  baseURL: import.meta.env.VITE_API_BASE_URL || '',  // ✅ You already fixed this
+  timeout: 300000,
   headers: {
     'Content-Type': 'application/json'
   }
 })
 
-// 请求拦截器
+// ✅ ADD THIS BACK (if missing):
+export const requestWithRetry = async (requestFn, retries = 3) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await requestFn()
+    } catch (error) {
+      if (i === retries - 1) throw error
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)))
+    }
+  }
+}
+
+// Request interceptor
 service.interceptors.request.use(
   config => {
     config.headers['Accept-Language'] = i18n.global.locale.value
@@ -22,12 +34,11 @@ service.interceptors.request.use(
   }
 )
 
-// 响应拦截器（容错重试机制）
+// Response interceptor
 service.interceptors.response.use(
   response => {
     const res = response.data
     
-    // 如果返回的状态码不是success，则抛出错误
     if (!res.success && res.success !== undefined) {
       console.error('API Error:', res.error || res.message || 'Unknown error')
       return Promise.reject(new Error(res.error || res.message || 'Error'))
@@ -41,4 +52,6 @@ service.interceptors.response.use(
   }
 )
 
+// ✅ EXPORT BOTH:
 export default service
+export { service }
